@@ -70,16 +70,17 @@ The model correctly read that the customer wants a refund. The policy said no, a
 
 ## Eval
 
-90 synthetic contacts across 18 scenarios, including service timeouts, a payment that commits and then times out, a failed ticket reissue, missing messaging consent, a CRM outage, prompt injection, and requests in Hinglish.
+98 synthetic contacts across 20 scenarios, including service timeouts, a payment that commits and then times out, a failed ticket reissue, missing messaging consent, a CRM outage, prompt injection, and requests in Hindi and Hinglish.
 
 | Run | Correct resolution | Resolved without an agent | Duplicate payments | Seats leaked | Out-of-policy payments | Ungrounded messages sent | Bad drafts caught | Retries absorbed | Rollbacks |
 |---|---|---|---|---|---|---|---|---|---|
-| rule-v1 | 95.6% | 64.4% | 0 | 0 | 0 | 0 | 0 | 9 | 4 |
-| rule-v1, writer errs 30% of the time | 95.6% | 64.4% | 0 | 0 | 0 | 0 | 57 | 9 | 4 |
+| rule-v2 | 95.9% | 67.3% | 0 | 0 | 0 | 0 | 0 | 9 | 4 |
+| rule-v2, writer errs 30% of the time | 95.9% | 67.3% | 0 | 0 | 0 | 0 | 62 | 9 | 4 |
 
 - The four invariants in the middle hold at zero whatever the model does. Those are the numbers a risk team signs off on.
-- The 4 misses are the Hinglish requests. The offline model can't read them, so it hands off instead of guessing. A real model should resolve them: `python -m orchestrator.eval --claude`.
-- 64% resolved without an agent is the honest number for this mix. A third of the scenarios are designed to need a human: unknown callers, someone else's booking, an explicit ask for an agent, unreadable replies, outages.
+- Hindi and Hinglish requests ("paise wapas kar do", "agli flight") resolve through an offline lexicon. When a reply names an intent but not which flight, the reader refuses to guess and the contact goes to an agent.
+- The 4 misses are customers who pick a flight by time of day ("the evening one works"). The offline reader can't map that to a departure, so it hands off instead of guessing. That is the gap a language model fills: `python -m orchestrator.eval --claude`.
+- 67% resolved without an agent is the honest number for this mix. A third of the scenarios are designed to need a human: unknown callers, someone else's booking, an explicit ask for an agent, unreadable replies, outages.
 
 ## Run it
 
@@ -87,10 +88,10 @@ The model correctly read that the customer wants a refund. The policy said no, a
 git clone https://github.com/shahabajsk/disruption-orchestrator && cd disruption-orchestrator
 pip install -e ".[dev]"
 
-python -m orchestrator list                     # 18 scenarios
+python -m orchestrator list                     # 20 scenarios
 python -m orchestrator run reissue_fails        # rebook, reissue fails, seats released, handoff
 python -m orchestrator run refund_ghost_commit  # refund commits then times out; paid once
-python -m orchestrator replay                   # 90 contacts, fingerprints must match
+python -m orchestrator replay                   # 98 contacts, fingerprints must match
 python -m orchestrator.eval                     # the table above
 pytest
 ```
@@ -103,7 +104,7 @@ pytest
 | `src/orchestrator/skills.py` | Skill registry and executor: retries, allowlist enforcement |
 | `src/orchestrator/systems.py` | Mock CRM, reservations, payments, messaging, with fault injection |
 | `src/orchestrator/policy.py` | Entitlement rules as plain code |
-| `src/orchestrator/model.py` | Model boundary: offline rules and a Claude adapter; grounding check |
+| `src/orchestrator/model.py` | Model boundary: offline reader with a Hindi/Hinglish lexicon, a Claude adapter, and the grounding check |
 | `src/orchestrator/eval.py` | Scenario runner and invariant checks |
 | `docs/adr/` | Why a state machine, and how writes stay safe |
 

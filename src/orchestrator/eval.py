@@ -32,7 +32,7 @@ class SloppyWriter(RuleModel):
     def __init__(self, rate: float, seed: int = 11) -> None:
         self.rate = rate
         self.rng = random.Random(seed)
-        self.name = f"rule-v1+sloppy-writer@{rate:.0%}"
+        self.name = f"{RuleModel.name}+sloppy-writer@{rate:.0%}"
         self.injected = 0
 
     def compose(self, facts: dict, kind: str) -> str:

@@ -34,9 +34,13 @@ MIX: dict[str, tuple[int, Resolution]] = {
     "no_seats_refund": (4, Resolution.REFUNDED),
     "consent_fallback": (4, Resolution.REFUNDED),
     "crm_down": (2, Resolution.HANDOFF),
-    # Hard for the offline model: Hinglish. It can't read these and hands off, which is the
-    # safe failure. A real model should resolve them; that's the point of the --claude run.
+    # Hindi and Hinglish, handled by the offline lexicon.
     "hinglish_refund": (4, Resolution.REFUNDED),
+    "hinglish_rebook": (4, Resolution.REBOOKED),
+    # Still hard offline: the customer picks a flight by time of day, not by code. The rule
+    # model can't map "the evening one" to a departure, so it hands off. That's the safe
+    # failure, and the case a language model is there for.
+    "time_of_day_choice": (4, Resolution.REBOOKED),
 }
 
 
@@ -135,6 +139,12 @@ def build(kind: str, idx: int, seed: int) -> Scenario:
     if kind == "hinglish_refund":
         f.status = "cancelled"
         text, choice = "flight cancel ho gaya, paise wapas chahiye", "paise wapas kar do"
+    if kind == "hinglish_rebook":
+        f.status = "cancelled"
+        text, choice = "flight cancel ho gaya, agli flight mein daal do", "pehli wali flight de do"
+    if kind == "time_of_day_choice":
+        f.status = "cancelled"
+        text, choice = "My flight was cancelled, please rebook me", "the evening one works for me"
     if kind == "crm_down":
         faults.hard_fail.add("crm.find")
 

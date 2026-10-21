@@ -72,5 +72,22 @@ def test_invariants_hold_even_with_a_sloppy_writer():
 def test_baseline_is_pinned():
     # If this moves, update the README table in the same change.
     r = run(lambda: __import__("orchestrator.model", fromlist=["RuleModel"]).RuleModel())
-    assert r["correct_resolution"] == 0.956
-    assert r["misses_by_kind"] == {"hinglish_refund": 4}
+    assert r["correct_resolution"] == 0.959
+    assert r["misses_by_kind"] == {"time_of_day_choice": 4}
+
+
+@pytest.mark.parametrize(
+    "text,options,expected",
+    [
+        ("paise wapas kar do", ["ZZ102", "ZZ104", "refund"], "refund"),
+        ("पैसे वापस चाहिए", ["ZZ102", "refund"], "refund"),
+        ("pehli wali flight de do", ["ZZ102", "ZZ104", "refund"], "ZZ102"),
+        ("theek hai", ["voucher"], "voucher"),
+        ("agli flight", ["ZZ102", "ZZ104", "refund"], None),  # two flights offered, no pick: ambiguous
+        ("the evening one works", ["ZZ102", "ZZ104", "refund"], None),  # known gap, hands off
+    ],
+)
+def test_choice_reader_handles_hinglish_and_refuses_to_guess(text, options, expected):
+    from orchestrator.model import RuleModel
+
+    assert RuleModel().read_choice(text, options) == expected
