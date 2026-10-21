@@ -38,21 +38,71 @@ TEMPLATES = {
 }
 
 
+# Hindi and Hinglish, the way customers actually write on WhatsApp in India.
+# Romanised spellings vary, so each intent carries a few common variants.
+LEXICON: dict[Intent, tuple[str, ...]] = {
+    Intent.HUMAN: (
+        "agent",
+        "human",
+        "call me",
+        "speak to",
+        "baat karni",
+        "baat karao",
+        "kisi se baat",
+        "agent se",
+        "insaan",
+    ),
+    Intent.REFUND: (
+        "refund",
+        "money back",
+        "paise wapas",
+        "paisa wapas",
+        "paise vapas",
+        "paisa vapas",
+        "पैसे वापस",
+        "रिफंड",
+    ),
+    Intent.VOUCHER: ("voucher", "coupon"),
+    Intent.REBOOK: (
+        "rebook",
+        "another flight",
+        "next flight",
+        "change flight",
+        "dusri flight",
+        "doosri flight",
+        "agli flight",
+        "dusre flight",
+        "दूसरी फ्लाइट",
+        "अगली फ्लाइट",
+    ),
+    Intent.STATUS: (
+        "status",
+        "delayed",
+        "cancelled",
+        "late",
+        "on time",
+        "what's happening",
+        "cancel ho",
+        "kab",
+        "kitna late",
+        "देरी",
+        "रद्द",
+    ),
+}
+AFFIRM = ("ok", "okay", "yes", "fine", "haan", "han", "theek hai", "thik hai", "ठीक है", "हाँ")
+FIRST = ("first", "pehli", "pehla", "earliest", "sabse pehle")
+
+
 class RuleModel:
-    name = "rule-v1"
+    """Offline intent and choice reader. English plus a Hindi/Hinglish lexicon."""
+
+    name = "rule-v2"
 
     def read_intent(self, text: str) -> Intent:
         t = text.lower()
-        if any(k in t for k in ("agent", "human", "call me", "speak to")):
-            return Intent.HUMAN
-        if "refund" in t or "money back" in t:
-            return Intent.REFUND
-        if "voucher" in t:
-            return Intent.VOUCHER
-        if any(k in t for k in ("rebook", "another flight", "next flight", "change flight")):
-            return Intent.REBOOK
-        if any(k in t for k in ("status", "delayed", "cancelled", "late", "on time", "what's happening")):
-            return Intent.STATUS
+        for intent in (Intent.HUMAN, Intent.REFUND, Intent.VOUCHER, Intent.REBOOK, Intent.STATUS):
+            if any(k in t for k in LEXICON[intent]):
+                return intent
         return Intent.UNCLEAR
 
     def read_choice(self, text: str, options: list[str]) -> str | None:
@@ -62,8 +112,19 @@ class RuleModel:
             return hits[0]
         if t in ("1", "2", "3") and int(t) <= len(options):
             return options[int(t) - 1]
-        if t in ("ok", "okay", "yes", "fine") and len(options) == 1:
+        if t in AFFIRM and len(options) == 1:
             return options[0]
+        # A named intent maps to an offered option only when it is unambiguous.
+        intent = self.read_intent(t)
+        flights = [o for o in options if o not in ("refund", "voucher")]
+        if intent is Intent.REFUND and "refund" in options:
+            return "refund"
+        if intent is Intent.VOUCHER and "voucher" in options:
+            return "voucher"
+        if flights and any(k in t for k in FIRST):
+            return flights[0]
+        if intent is Intent.REBOOK and len(flights) == 1:
+            return flights[0]
         return None
 
     def compose(self, facts: dict, kind: str) -> str:
