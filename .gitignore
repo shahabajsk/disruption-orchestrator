@@ -1,9 +1,9 @@
-__pycache__/
 *.egg-info/
-.venv/
+*.tsbuildinfo
+.env
 .pytest_cache/
 .ruff_cache/
-dashboard/node_modules/
+.venv/
+__pycache__/
 dashboard/dist/
-.env
-*.tsbuildinfo
+dashboard/node_modules/
