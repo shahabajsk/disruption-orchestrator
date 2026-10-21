@@ -154,7 +154,7 @@ def build(kind: str, idx: int, seed: int) -> Scenario:
         pay=Payments(faults),
         msg=Messaging(faults),
     )
-    req = Request(id=f"R{seed % 100:02d}-{kind[:6]}-{idx}", phone=phone, pnr=use_pnr, text=text, choice_text=choice)
+    req = Request(id=f"R{seed % 100:02d}-{kind}-{idx}", phone=phone, pnr=use_pnr, text=text, choice_text=choice)
     return Scenario(
         id=req.id,
         kind=kind,
