@@ -80,6 +80,11 @@ def run(model_factory, seed: int = 42) -> dict:
             {
                 "id": sc.id,
                 "kind": sc.kind,
+                "says": sc.request.text,
+                "replies": sc.request.choice_text,
+                "skill_calls": out.skill_calls,
+                "retries": out.retries_absorbed,
+                "rolled_back": out.compensated,
                 "expected": sc.expected.value,
                 "got": out.resolution.value,
                 "ok": out.resolution == sc.expected,

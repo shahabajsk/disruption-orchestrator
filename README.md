@@ -4,6 +4,10 @@
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+**[Live console](https://shahabajsk.github.io/disruption-orchestrator/)**: pick any of the 98 contacts and replay its route through the state machine.
+
+![Disruption desk console](docs/console.png)
+
 One deterministic state machine that resolves airline disruption contacts across four systems that don't know about each other: CRM, reservations, payments and messaging.
 
 This is a public reference implementation of the pattern I run in production for airline customer operations: explicit states, a typed skill registry with per-state allowlists, idempotent writes, compensation when a multi-system change fails halfway, and replayable traces. The airline, systems and data here are synthetic.
@@ -96,6 +100,13 @@ python -m orchestrator.eval                     # the table above
 pytest
 ```
 
+Console:
+
+```bash
+python -m orchestrator.eval --out dashboard/eval.json
+cd dashboard && npm install && npm run dev
+```
+
 ## Repository map
 
 | Path | What it is |
@@ -106,6 +117,7 @@ pytest
 | `src/orchestrator/policy.py` | Entitlement rules as plain code |
 | `src/orchestrator/model.py` | Model boundary: offline reader with a Hindi/Hinglish lexicon, a Claude adapter, and the grounding check |
 | `src/orchestrator/eval.py` | Scenario runner and invariant checks |
+| `dashboard/` | React + TypeScript console: route-map replay of every contact, invariants, outbound messages |
 | `docs/adr/` | Why a state machine, and how writes stay safe |
 
 ## Related
