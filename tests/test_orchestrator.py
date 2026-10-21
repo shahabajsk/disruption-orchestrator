@@ -91,3 +91,8 @@ def test_choice_reader_handles_hinglish_and_refuses_to_guess(text, options, expe
     from orchestrator.model import RuleModel
 
     assert RuleModel().read_choice(text, options) == expected
+
+
+def test_contact_ids_are_unique():
+    ids = [sc.id for sc in all_scenarios()]
+    assert len(ids) == len(set(ids))
